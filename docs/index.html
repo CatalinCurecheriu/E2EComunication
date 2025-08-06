@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>E2E Test Cases Update</title>
+  <style>
+    /* ========================
+       Light/Dark theme variables
+       ======================== */
+    :root {
+      --bg-color: #f4f7f9;
+      --container-bg-color: #ffffff;
+      --text-color: #333;
+      --heading-color: #2c3e50;
+      --border-color: #ccc;
+      --input-bg-color: #ffffff;
+      --item-bg-color: #ecf0f1;
+      --item-header-color: #2c3e50;
+      --toggle-inactive-color: #95a5a6;
+      --toggle-active-color: #555;
+      --blue-accent: #3498db;
+      --green-accent: #2ecc71;
+      --shadow-color: rgba(0, 0, 0, 0.1);
+
+      /* Status backgrounds (light) */
+      --status-new-bg: #ffe5e5;           /* light red for New */
+      --status-done-bg: #e6f9ec;          /* light green for Done */
+      --status-not-impacted-bg: #eeeeee;  /* light gray for Not impacted */
+    }
+    html[data-theme='dark'] {
+      --bg-color: #121212;
+      --container-bg-color: #1e1e1e;
+      --text-color: #e0e0e0;
+      --heading-color: #ffffff;
+      --border-color: #444;
+      --input-bg-color: #2a2a2a;
+      --item-bg-color: #2c3e50;
+      --item-header-color: #e0e0e0;
+      --toggle-inactive-color: #777;
+      --toggle-active-color: #ccc;
+      --blue-accent: #3498db;
+      --green-accent: #2ecc71;
+      --shadow-color: rgba(0, 0, 0, 0.3);
+
+      /* Status backgrounds (dark) */
+      --status-new-bg: #3a1f1f;           /* muted dark red */
+      --status-done-bg: #1f2e25;          /* muted dark green */
+      --status-not-impacted-bg: #2a2a2a;  /* dark gray */
+    }
+
+    /* ========================
+       Base styles
+       ======================== */
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.6;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      margin: 0;
+      padding: 20px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    .container {
+      position: relative;
+      max-width: 900px;
+      margin: 0 auto;
+      background-color: var(--container-bg-color);
+      padding: 24px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px var(--shadow-color);
+      transition: background-color 0.3s;
+    }
+    h1, h2 {
+      color: var(--heading-color);
+      border-bottom: 2px solid var(--blue-accent);
+      padding-bottom: 10px;
+      margin-bottom: 16px;
+    }
+
+    /* ========================
+       Top bar (theme select + collapse)
+       ======================== */
+    .topbar {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .left-topbar, .right-topbar { display: flex; gap: 8px; align-items: center; }
+    .theme-select { display: inline-flex; align-items: center; gap: 6px; }
+    .theme-select label { font-size: 0.95rem; color: var(--toggle-active-color); }
+    .theme-select select {
+      padding: 6px 8px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      background: var(--input-bg-color);
+      color: var(--text-color);
+    }
+    #collapse-btn {
+      background: none;
+      border: 1px solid var(--border-color);
+      color: var(--text-color);
+      padding: 6px 10px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      user-select: none;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    #collapse-btn:hover { background-color: var(--blue-accent); color: white; }
+
+    /* ========================
+       Collapsible header section
+       ======================== */
+    .header-section { transition: max-height 0.35s ease, opacity 0.25s ease; overflow: hidden; }
+    .header-section.hidden { max-height: 0 !important; opacity: 0; pointer-events: none; }
+    #expand-btn {
+      display: none; /* shown only when collapsed */
+      width: 100%;
+      margin: 8px 0 12px 0;
+      background: none;
+      border: 1px dashed var(--border-color);
+      color: var(--text-color);
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.95rem;
+    }
+    #expand-btn:hover { background-color: var(--item-bg-color); }
+
+    /* ========================
+       Accordion (form)
+       ======================== */
+    .collapsible-section {
+      background-color: var(--bg-color);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      margin-bottom: 20px;
+      overflow: hidden;
+      transition: background-color 0.3s;
+    }
+    .collapsible-section summary {
+      font-weight: bold;
+      font-size: 1.1em;
+      color: var(--heading-color);
+      padding: 12px 16px;
+      cursor: pointer;
+      outline: none;
+      user-select: none;
+      list-style-position: inside;
+    }
+    .collapsible-section summary::marker { content: '▸ '; }
+    .collapsible-section[open] summary::marker { content: '▾ '; }
+    .form-container { padding: 0 16px 16px 16px; }
+
+    .input-group { margin-bottom: 14px; }
+    .input-group label { display: block; margin-bottom: 6px; font-weight: 600; color: var(--toggle-active-color); }
+    .input-group input[type='number'], .input-group textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      box-sizing: border-box;
+      background-color: var(--input-bg-color);
+      color: var(--text-color);
+      transition: border-color 0.3s, background-color 0.3s, color 0.3s;
+    }
+    .input-group input[type='number']:focus, .input-group textarea:focus { border-color: var(--blue-accent); outline: none; }
+    textarea { resize: vertical; min-height: 100px; }
+    .save-button { background-color: var(--blue-accent); color: white; padding: 10px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem; transition: opacity 0.3s; }
+    .save-button:hover { opacity: 0.9; }
+
+    /* Team toggle */
+    .toggle-container { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .toggle-label { font-size: 1.05em; color: var(--toggle-active-color); transition: color 0.4s; }
+    .toggle-label.inactive { color: var(--toggle-inactive-color); }
+    .switch { position: relative; display: inline-block; width: 60px; height: 34px; flex-shrink: 0; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; inset: 0; background-color: var(--blue-accent); transition: 0.4s; border-radius: 34px; }
+    .slider:before { position: absolute; content: ''; height: 26px; width: 26px; left: 4px; bottom: 4px; background-color: white; transition: 0.4s; border-radius: 50%; }
+    input:checked + .slider { background-color: var(--green-accent); }
+    input:checked + .slider:before { transform: translateX(26px); }
+
+    /* ========================
+       Test case list + scroll
+       ======================== */
+    .test-case-list { margin-top: 16px; }
+    #test-case-list-container { max-height: 60vh; overflow-y: auto; padding-right: 4px; }
+
+    .test-case-item {
+      background-color: var(--item-bg-color);
+      padding: 14px;
+      margin-bottom: 12px;
+      border-radius: 0 6px 6px 0;
+      transition: background-color 0.25s ease, opacity 0.2s ease;
+      word-wrap: break-word;
+    }
+    /* Team accent (left border) remains */
+    .test-case-item.pricing-to-quotation { border-left: 5px solid var(--blue-accent); }
+    .test-case-item.quotation-to-pricing { border-left: 5px solid var(--green-accent); }
+
+    /* Status-driven background colors for the whole item */
+    .test-case-item.status-new { background-color: var(--status-new-bg); }
+    .test-case-item.status-done { background-color: var(--status-done-bg); }
+    .test-case-item.status-not-impacted { background-color: var(--status-not-impacted-bg); }
+    /* In progress: keep default background (no extra class) */
+
+    /* Fade-out when removing */
+    .test-case-item.removing { opacity: 0; }
+
+    .test-case-header { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; font-weight: 700; font-size: 1.02em; color: var(--item-header-color); }
+    .header-left { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+    .team { font-style: italic; font-weight: 600; }
+    .timestamp { font-size: 0.9em; opacity: 0.85; }
+    .header-right { display: flex; align-items: center; gap: 6px; }
+    .header-right label { font-size: 0.9em; color: var(--toggle-active-color); }
+
+    /* Status select styles (border colored by value) */
+    .status-select { border: 1px solid var(--border-color); border-radius: 6px; background: var(--input-bg-color); color: var(--text-color); padding: 6px 8px; }
+    .status-select.status-new { border-color: #e74c3c; }
+    .status-select.status-in-progress { border-color: #f39c12; }
+    .status-select.status-done { border-color: #27ae60; }
+    .status-select.status-not-impacted { border-color: #7f8c8d; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Collapsible header section -->
+    <div id="header-section" class="header-section">
+      <div class="topbar">
+        <div class="left-topbar">
+          <div class="theme-select">
+            <label for="theme-select">Theme:</label>
+            <select id="theme-select" aria-label="Select theme">
+              <option value="light">Light</option>
+              <option value="dark">Dark</option>
+            </select>
+          </div>
+        </div>
+        <div class="right-topbar">
+          <button id="collapse-btn" title="Collapse header">▲</button>
+        </div>
+      </div>
+
+      <h1>E2E Test Cases Update</h1>
+
+      <details class="collapsible-section">
+        <summary>Add New Test Case</summary>
+        <div class="form-container">
+          <div class="toggle-container">
+            <span id="toggle-label-left" class="toggle-label">Pricing to Quotation</span>
+            <label class="switch">
+              <input type="checkbox" id="team-toggle" />
+              <span class="slider"></span>
+            </label>
+            <span id="toggle-label-right" class="toggle-label inactive">Quotation to Pricing</span>
+          </div>
+
+          <div class="input-group">
+            <label for="test-case-id">Test Case ID (numeric)</label>
+            <input type="number" id="test-case-id" placeholder="e.g., 12345" />
+          </div>
+
+          <div class="input-group">
+            <label for="test-case-description">Description</label>
+            <textarea id="test-case-description" placeholder="Describe the changes..."></textarea>
+          </div>
+
+          <button class="save-button" id="save-button">Save</button>
+        </div>
+      </details>
+    </div>
+
+    <!-- Down caret to re-expand when collapsed -->
+    <button id="expand-btn" title="Expand header">▾ Show section</button>
+
+    <!-- Test case list -->
+    <div class="test-case-list" id="test-case-list-container">
+      <h2>Updated Test Cases</h2>
+      <!-- Items will be appended here -->
+    </div>
+  </div>
+
+  <!-- Supabase credentials (fill these) -->
+  <script>
+    window.__SUPABASE_URL__ = 'https://ybcradgmihnljsbcgoon.supabase.co';
+    window.__SUPABASE_ANON_KEY__ = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InliY3JhZGdtaWhubGpzYmNnb29uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ0ODgyMDIsImV4cCI6MjA3MDA2NDIwMn0.y_w3vSBXcbbpks9cV54-7poutNc-msFaD_Y87g01Avo';
+  </script>
+  <!-- App code -->
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
